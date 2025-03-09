@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 # Load Data
 
-df = pd.read_csv("/content/university_student_dashboard_data.csv")
+df = pd.read_csv("university_student_dashboard_data.csv")
   #  /content/university_student_dashboard_data.csv
 
 df = load_data()
