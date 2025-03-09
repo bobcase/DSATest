@@ -1,9 +1,8 @@
-#!pip install streamlit plotly
+#!pip install streamlit
 
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-import plotly.express as px  # For interactive charts
 
 # Load Data
 @st.cache_data
@@ -13,83 +12,67 @@ def load_data():
 
 df = load_data()
 
-# Sidebar Filters with Sliders
-st.sidebar.header("🎛️ Filters")
-year_range = st.sidebar.slider("Select Year Range", int(df['Year'].min()), int(df['Year'].max()), 
-                               (int(df['Year'].min()), int(df['Year'].max())))
-
+# Sidebar Filters
+st.sidebar.header("Filters")
 selected_term = st.sidebar.selectbox("Select Term", ['All'] + sorted(df['Term'].unique()))
 
-# Apply Filters
-filtered_df = df[(df['Year'] >= year_range[0]) & (df['Year'] <= year_range[1])]
-
 if selected_term != 'All':
-    filtered_df = filtered_df[filtered_df['Term'] == selected_term]
+    df = df[df['Term'] == selected_term]
 
-# KPIs with Vibrant Colors
-st.title("🚀 University Student Analytics Dashboard")
+# KPIs
+st.title("📊 University Student Analytics Dashboard")
 
 col1, col2, col3 = st.columns(3)
-col1.metric("📌 Total Applications", f"{filtered_df['Applications'].sum():,}", delta=None)
-col2.metric("🎓 Total Admissions", f"{filtered_df['Admitted'].sum():,}", delta=None)
-col3.metric("📝 Total Enrollments", f"{filtered_df['Enrolled'].sum():,}", delta=None)
+col1.metric("Total Applications", f"{df['Applications'].sum():,}")
+col2.metric("Total Admissions", f"{df['Admitted'].sum():,}")
+col3.metric("Total Enrollments", f"{df['Enrolled'].sum():,}")
 
-# Enrollment Breakdown by Department (Interactive)
+# Enrollment Breakdown by Department
 st.subheader("📌 Enrollment Breakdown by Department")
-department_enrollment = filtered_df[['Engineering Enrolled', 'Business Enrolled', 'Arts Enrolled', 'Science Enrolled']].sum()
-fig_dept = px.bar(department_enrollment, 
-             x=department_enrollment.index, 
-             y=department_enrollment.values, 
-             labels={'x': "Department", 'y': "Total Enrollments"},
-             color=department_enrollment.index,
-             title="Enrollment by Department",
-             text_auto=True)
-st.plotly_chart(fig_dept)
+department_enrollment = df[['Engineering Enrolled', 'Business Enrolled', 'Arts Enrolled', 'Science Enrolled']].sum()
 
-# Retention Rate Over Time (Interactive)
+fig, ax = plt.subplots()
+department_enrollment.plot(kind='bar', ax=ax, color=['blue', 'green', 'red', 'purple'])
+ax.set_ylabel("Total Enrollments")
+ax.set_title("Enrollment by Department")
+st.pyplot(fig)
+
+# Retention Rate Over Time
 st.subheader("📈 Retention Rate Over Time")
-fig_retention = px.line(filtered_df.groupby('Year')['Retention Rate (%)'].mean().reset_index(), 
-              x="Year", 
-              y="Retention Rate (%)",
-              markers=True,
-              title="Retention Rate Over the Years",
-              hover_name="Year")
-st.plotly_chart(fig_retention)
+fig, ax = plt.subplots()
+df.groupby('Year')['Retention Rate (%)'].mean().plot(ax=ax, marker='o', linestyle='-', color='blue')
+ax.set_ylabel("Retention Rate (%)")
+ax.set_title("Retention Rate Over the Years")
+st.pyplot(fig)
 
-# Student Satisfaction Over Years (Interactive)
+# Student Satisfaction Over Years
 st.subheader("😊 Student Satisfaction Scores Over Years")
-fig_satisfaction = px.line(filtered_df.groupby('Year')['Student Satisfaction (%)'].mean().reset_index(), 
-              x="Year", 
-              y="Student Satisfaction (%)",
-              markers=True,
-              title="Student Satisfaction Trend",
-              hover_name="Year",
-              color_discrete_sequence=["orange"])
-st.plotly_chart(fig_satisfaction)
+fig, ax = plt.subplots()
+df.groupby('Year')['Student Satisfaction (%)'].mean().plot(ax=ax, marker='s', linestyle='-', color='orange')
+ax.set_ylabel("Satisfaction Score (%)")
+ax.set_title("Student Satisfaction Trend")
+st.pyplot(fig)
 
-# Comparison of Spring vs Fall Enrollment (Interactive)
+# Comparison of Spring vs Fall Enrollment
 st.subheader("🌱📚 Comparison: Spring vs Fall Enrollment")
-seasonal_enrollment = filtered_df.groupby('Term')['Enrolled'].sum().reset_index()
-fig_season = px.bar(seasonal_enrollment, 
-             x='Term', 
-             y='Enrolled', 
-             title="Spring vs. Fall Enrollment",
-             color='Term', 
-             text_auto=True)
-st.plotly_chart(fig_season)
+seasonal_enrollment = df.groupby('Term')['Enrolled'].sum()
 
-# Department Trends Over Time (Interactive)
+fig, ax = plt.subplots()
+seasonal_enrollment.plot(kind='bar', ax=ax, color=['skyblue', 'salmon'])
+ax.set_ylabel("Total Enrolled Students")
+ax.set_title("Spring vs. Fall Enrollment")
+st.pyplot(fig)
+
+# Department Trends Over Time
 st.subheader("📊 Trends Across Departments Over Time")
-department_trends = filtered_df.pivot_table(index="Year", 
-                                            values=['Engineering Enrolled', 'Business Enrolled', 'Arts Enrolled', 'Science Enrolled'], 
-                                            aggfunc="sum").reset_index()
-fig_dept_trend = px.line(department_trends, 
-              x="Year", 
-              y=['Engineering Enrolled', 'Business Enrolled', 'Arts Enrolled', 'Science Enrolled'],
-              title="Department Enrollment Trends Over Time",
-              markers=True)
-st.plotly_chart(fig_dept_trend)
+department_trends = df.pivot_table(index="Year", values=['Engineering Enrolled', 'Business Enrolled', 'Arts Enrolled', 'Science Enrolled'], aggfunc="sum")
 
-# Display Filtered Data Table
+fig, ax = plt.subplots()
+department_trends.plot(ax=ax, marker='o')
+ax.set_ylabel("Number of Enrollments")
+ax.set_title("Department Enrollment Trends Over Time")
+st.pyplot(fig)
+
+# Display Data Table
 st.subheader("📋 Student Enrollment Data")
-st.dataframe(filtered_df)
+st.dataframe(df)
