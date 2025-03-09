@@ -5,10 +5,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Load Data
-@st.cache_data
-def load_data():
-    df = pd.read_csv("/content/university_student_dashboard_data.csv")
-    return df
+
+df = pd.read_csv("/content/university_student_dashboard_data.csv")
+  #  /content/university_student_dashboard_data.csv
 
 df = load_data()
 
